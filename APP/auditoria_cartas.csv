@@ -1,0 +1,10 @@
+Data,Região,Massa_IA,IA_Acertou,Massa_Real,Data_Verificacao
+2021-01-01,Centro,mTc,Não,mPa,2026-05-22T15:09:10
+2021-01-01,Litoral,mEa,Sim,mEa,2026-05-21T15:03:09
+2021-01-01,Nordeste,mTa,Sim,mTa,2026-05-21T15:03:05
+2021-01-01,Norte,mEc,Não,mPa,2026-05-22T14:47:56
+2021-01-01,Sul,mPa,Sim,mPa,2026-05-21T15:03:12
+2021-09-03,Centro,mTa,Não,mTc,2026-05-20 12:50:56
+2023-06-30,Centro,mPa,Sim,mPa,2026-05-20 13:13:56
+2023-06-30,Nordeste,mTa,Sim,mTa,2026-05-20 13:13:39
+2023-06-30,Norte,mEc,Não,mEa,2026-05-20 13:14:20
