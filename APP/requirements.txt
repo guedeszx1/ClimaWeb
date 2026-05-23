@@ -1,0 +1,6 @@
+streamlit
+pandas
+psutil
+plotly
+pygwalker
+supabase

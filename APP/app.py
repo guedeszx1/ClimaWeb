@@ -262,23 +262,11 @@ if 'f_status' not in st.session_state: st.session_state.f_status = sorted(df['ST
 
 # Valores iniciais para caminhos do laboratório
 app_dir = os.path.dirname(os.path.abspath(__file__))
-rel_dir_cartas = os.path.join(app_dir, "cartas_sinoticas")
-rel_gabarito = os.path.join(app_dir, "resultado_debug_inmet.jpg")
+parent_dir = os.path.dirname(app_dir)
 
-# Verifica se o diretório relativo existe e contém arquivos (evita diretórios vazios locais no Windows)
-is_rel_cartas_valid = os.path.exists(rel_dir_cartas) and os.path.isdir(rel_dir_cartas) and len(os.listdir(rel_dir_cartas)) > 0
-default_dir_cartas = rel_dir_cartas if is_rel_cartas_valid else r"G:\Meu Drive\PIBIC\Cartas\Cartas_Sinoticas_INMET\cartas_2020_2025"
-default_gabarito = rel_gabarito if os.path.exists(rel_gabarito) else r"C:\ClimaWeb\resultado_debug_inmet.jpg"
-
-if 'dir_cartas' not in st.session_state: 
-    st.session_state.dir_cartas = default_dir_cartas
-elif is_rel_cartas_valid and st.session_state.dir_cartas == r"G:\Meu Drive\PIBIC\Cartas\Cartas_Sinoticas_INMET\cartas_2020_2025":
-    st.session_state.dir_cartas = default_dir_cartas
-
-if 'dir_gabarito' not in st.session_state: 
-    st.session_state.dir_gabarito = default_gabarito
-elif os.path.exists(rel_gabarito) and st.session_state.dir_gabarito == r"C:\ClimaWeb\resultado_debug_inmet.jpg":
-    st.session_state.dir_gabarito = default_gabarito
+# Valores iniciais para caminhos do laboratório
+if 'dir_cartas' not in st.session_state: st.session_state.dir_cartas = os.path.join(parent_dir, "cartas")
+if 'dir_gabarito' not in st.session_state: st.session_state.dir_gabarito = os.path.join(parent_dir, "resultado_debug_inmet.jpg")
 
 # ================= 4. BARRA LATERAL (MENU E FILTROS) =================
 st.sidebar.markdown("<h2>⚙️ Configurações</h2>", unsafe_allow_html=True)
@@ -748,7 +736,8 @@ with aba6:
                 
                 with st.expander("Ver Bounding Boxes / Gabarito da IA"):
                     if not os.path.exists(caminho_gabarito):
-                        caminho_gabarito = os.path.join(app_dir, "resultado_debug_inmet.jpg") if os.path.exists(os.path.join(app_dir, "resultado_debug_inmet.jpg")) else r"C:\ClimaWeb\resultado_debug_inmet.jpg"
+                        # Fallback inteligente (busca na raiz do projeto independente de onde esteja)
+                        caminho_gabarito = os.path.join(parent_dir, "resultado_debug_inmet.jpg")
                     
                     if os.path.exists(caminho_gabarito):
                         st.image(caminho_gabarito, use_container_width=True)
