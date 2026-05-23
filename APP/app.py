@@ -9,7 +9,7 @@ import pygwalker as pyg
 import streamlit.components.v1 as components
 from datetime import datetime
 
-# ================= 1. CONFIGURAÇÃO DA PÁGINA =================
+# ==============
 st.set_page_config(
     page_title="Dashboard Climatológico PIBIC",
     page_icon="⛈️",
