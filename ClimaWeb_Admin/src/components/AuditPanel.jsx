@@ -18,6 +18,7 @@ export default function AuditPanel({ allData = [], onRefreshData }) {
   const [imageSrc, setImageSrc] = useState('')
   const [fallbackAttempt, setFallbackAttempt] = useState(0)
   const [imageError, setImageError] = useState(false)
+  const [fullscreenImage, setFullscreenImage] = useState(null)
 
   // 1. Get list of unique dates for the dropdown
   const uniqueDates = useMemo(() => {
@@ -470,7 +471,8 @@ export default function AuditPanel({ allData = [], onRefreshData }) {
                     src={imageSrc} 
                     alt={`Carta Sinótica INMET - ${selectedDate}`} 
                     onError={handleImageError}
-                    style={{ maxWidth: '100%', maxHeight: '420px', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} 
+                    onClick={() => setFullscreenImage(imageSrc)}
+                    style={{ maxWidth: '100%', maxHeight: '420px', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', cursor: 'pointer' }} 
                   />
                 )
               ) : (
@@ -480,7 +482,8 @@ export default function AuditPanel({ allData = [], onRefreshData }) {
               <img 
                 src="/resultado_debug_inmet.jpg" 
                 alt="Gabarito de Detecção da IA"
-                style={{ maxWidth: '100%', maxHeight: '420px', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} 
+                onClick={() => setFullscreenImage("/resultado_debug_inmet.jpg")}
+                style={{ maxWidth: '100%', maxHeight: '420px', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', cursor: 'pointer' }} 
                 onError={(e) => {
                   e.target.style.display = 'none';
                   alert('Não foi possível carregar o arquivo resultado_debug_inmet.jpg no diretório public.');
@@ -491,6 +494,24 @@ export default function AuditPanel({ allData = [], onRefreshData }) {
         </div>
 
       </div>
+
+      {fullscreenImage && (
+        <div 
+          onClick={() => setFullscreenImage(null)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)', zIndex: 9999,
+            display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'zoom-out'
+          }}
+        >
+          <img 
+            src={fullscreenImage} 
+            style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }} 
+            alt="Carta Sinótica Expandida" 
+          />
+          <div style={{ position: 'absolute', top: '20px', right: '30px', color: '#fff', fontSize: '2rem', fontWeight: 'bold' }}>&times;</div>
+        </div>
+      )}
 
       {/* Row 3: Statistics (Left) & Audit History (Right) */}
       <div className="responsive-grid-two-cols">

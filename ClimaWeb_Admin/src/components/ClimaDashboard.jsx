@@ -3,8 +3,10 @@ import { supabase } from '../supabaseClient'
 import BrazilMap, { GLOSSARIO } from './BrazilMap'
 import ClimaCharts from './ClimaCharts'
 import Glossary from './Glossary'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Treemap, LineChart, Line, LabelList } from 'recharts'
-import { downloadChartAsPng } from '../utils/exportChart'
+import AuditPanel from './AuditPanel'
+import DataExplorer from './DataExplorer'
+import Plot from 'react-plotly.js'
+import { Treemap, Tooltip } from 'recharts'
 
 const CustomizedTreemapContent = (props) => {
   const { x, y, width, height, index, name, depth, value, color } = props;
@@ -370,8 +372,18 @@ export default function ClimaDashboard({ session }) {
       name: mass,
       Dias: count,
       fill: GLOSSARIO[mass]?.cor || 'var(--text-secondary)'
-    })).filter(item => item.Dias > 0)
+    })).filter(item => item.Dias > 0).sort((a, b) => a.Dias - b.Dias) // sort ascending for horizontal bar chart
   }, [filteredData])
+
+  const plotlySpatialLayout = useMemo(() => ({
+    paper_bgcolor: 'transparent',
+    plot_bgcolor: 'transparent',
+    font: { color: '#cbd5e1', family: 'Inter, sans-serif' },
+    margin: { t: 10, r: 20, l: 45, b: 40 },
+    xaxis: { gridcolor: 'rgba(255,255,255,0.1)', tickfont: { color: '#94a3b8' }, title: 'Frequência (Dias)' },
+    yaxis: { gridcolor: 'rgba(255,255,255,0.1)', tickfont: { color: '#94a3b8' } },
+    hovermode: 'closest'
+  }), [])
 
   const treemapData = useMemo(() => {
     const regionMap = {}
@@ -469,20 +481,7 @@ export default function ClimaDashboard({ session }) {
     <div className="dashboard-grid">
       
       {/* Sidebar Filter Panel */}
-      <aside style={{
-        background: 'var(--bg-card)',
-        borderRight: '1px solid var(--border)',
-        padding: '20px 16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '18px',
-        minHeight: '100vh',
-        position: 'sticky',
-        top: 0,
-        alignSelf: 'start',
-        maxHeight: '100vh',
-        overflowY: 'auto'
-      }}>
+      <aside className="dashboard-sidebar">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '14px', borderBottom: '1px solid var(--border)' }}>
           <div>
             <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>⛈️ ClimaWeb</h2>
@@ -649,44 +648,7 @@ export default function ClimaDashboard({ session }) {
           </div>
         </div>
 
-        {/* Local Browser RAM usage chart */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px' }}>
-          <h3 style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
-            RAM da Aba (MB)
-          </h3>
 
-          {metricsHistory.length > 0 && !metricsHistory[metricsHistory.length - 1].supported ? (
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', padding: '8px' }}>
-              ⚠️ Apenas Chrome/Edge
-            </div>
-          ) : (
-            <div>
-              <div style={{ height: '100px', width: '100%' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={metricsHistory} margin={{ top: 4, right: 4, left: -32, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke='var(--border)' />
-                    <XAxis dataKey="timestamp" stroke='var(--text-muted)' fontSize={7} tickLine={false} />
-                    <YAxis stroke='var(--text-muted)' fontSize={7} tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card-alt)', border: '1px solid var(--border-light)', borderRadius: '4px', fontSize: '9px', color: 'var(--text-primary)' }} />
-                    <Line type="monotone" dataKey="Heap Ativo (MB)" stroke="#ef4444" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="Heap Alocado (MB)" stroke="#3b82f6" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', marginTop: '4px' }}>
-                <div style={{ display: 'flex', gap: '10px', fontSize: '8px', color: 'var(--text-muted)' }}>
-                  <span><span style={{ color: '#ef4444' }}>■</span> Ativo</span>
-                  <span><span style={{ color: '#3b82f6' }}>■</span> Alocado</span>
-                </div>
-                {metricsHistory.length > 0 && (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', fontFamily: 'monospace' }}>
-                    {metricsHistory[metricsHistory.length - 1]['Heap Ativo (MB)']} / {metricsHistory[metricsHistory.length - 1]['Heap Alocado (MB)']} MB
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
 
         <div className="unb-footer">
           <div className="unb-logos-row">
@@ -699,9 +661,9 @@ export default function ClimaDashboard({ session }) {
           </div>
           <div className="unb-footer-text">
             <strong>Universidade de Brasília</strong>
-            LCGEA · Lab. de Climatologia<br />
-            Geográfica e Análise Ambiental<br />
-            Pesquisador: Rafael Guedes · PIBIC
+            LCGEA · Laboratório de Climatologia<br />
+            Geográfica<br />
+            Pesquisadores: Rafael Guedes e João Vitor · PIBIC
           </div>
         </div>
       </aside>
@@ -793,6 +755,18 @@ export default function ClimaDashboard({ session }) {
           >
             📖 Guia de Massas de Ar
           </button>
+          <button 
+            onClick={() => setActiveTab('auditoria')} 
+            className={`tab-button ${activeTab === 'auditoria' ? 'active' : ''}`}
+          >
+            ⚖️ Auditoria Pública
+          </button>
+          <button 
+            onClick={() => setActiveTab('explorer')} 
+            className={`tab-button ${activeTab === 'explorer' ? 'active' : ''}`}
+          >
+            🧪 Explorador de Dados
+          </button>
 
         </div>
 
@@ -824,39 +798,28 @@ export default function ClimaDashboard({ session }) {
                       <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>📊 Contagem de Dias por Massa de Ar</h4>
                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '24px' }}>Dias totais em que a massa esteve ativa (filtros aplicados)</p>
                     </div>
-                    <button onClick={() => downloadChartAsPng('chart-contagem-dias', 'contagem-dias')} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>⬇️ Baixar PNG</button>
                   </div>
                   
                   <div style={{ width: '100%', height: '320px', marginTop: 'auto' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={barChartSpatialData} layout="vertical" margin={{ top: 10, right: 35, left: 10, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke='var(--border)' />
-                        <XAxis 
-                          type="number" 
-                          stroke='var(--text-secondary)' 
-                          fontSize={11}
-                          tickLine={{ stroke: 'var(--text-muted)' }}
-                          label={{ value: 'Frequência de Ocorrência (Dias)', position: 'insideBottom', offset: -10, fill: 'var(--text-secondary)', fontSize: 11, fontWeight: 'bold' }} 
-                        />
-                        <YAxis 
-                          dataKey="name" 
-                          type="category" 
-                          stroke='var(--text-secondary)' 
-                          fontSize={11} 
-                          width={45} 
-                          tickLine={{ stroke: 'var(--text-muted)' }}
-                        />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'var(--text-primary)' }}
-                        />
-                        <Bar dataKey="Dias" radius={[0, 4, 4, 0]} maxBarSize={30}>
-                          {barChartSpatialData.map((entry, index) => (
-                            <path key={`cell-${index}`} fill={entry.fill} />
-                          ))}
-                          <LabelList dataKey="Dias" position="right" fill='var(--text-primary)' fontSize={11} style={{ fontWeight: '600' }} />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <Plot
+                      data={[{
+                        type: 'bar',
+                        x: barChartSpatialData.map(d => d.Dias),
+                        y: barChartSpatialData.map(d => d.name),
+                        orientation: 'h',
+                        marker: { color: barChartSpatialData.map(d => d.fill) },
+                        text: barChartSpatialData.map(d => String(d.Dias)),
+                        textposition: 'auto',
+                        hoverinfo: 'y+text'
+                      }]}
+                      layout={{
+                        ...plotlySpatialLayout,
+                        autosize: true
+                      }}
+                      style={{ width: '100%', height: '100%' }}
+                      useResizeHandler={true}
+                      config={{ responsive: true, displaylogo: false }}
+                    />
                   </div>
                 </div>
 
@@ -869,7 +832,12 @@ export default function ClimaDashboard({ session }) {
               <ClimaCharts filteredData={filteredData} />
             )}
 
-            {/* TAB 3: Relatório Diário (Interactive Table + Map) */}
+            {/* TAB 3: Explorador de Dados (Graphic Walker) */}
+            {activeTab === 'explorer' && (
+              <DataExplorer filteredData={filteredData} />
+            )}
+
+            {/* TAB 4: Relatório Diário (Interactive Table + Map) */}
             {activeTab === 'diario' && (
               <div className="responsive-grid-two-cols-asymmetric">
                 
@@ -1002,6 +970,11 @@ export default function ClimaDashboard({ session }) {
             {/* TAB 4: Guia de Massas de Ar */}
             {activeTab === 'guia' && (
               <Glossary />
+            )}
+
+            {/* TAB 5: Auditoria */}
+            {activeTab === 'auditoria' && (
+              <AuditPanel allData={allData} onRefreshData={handleRefresh} />
             )}
 
 

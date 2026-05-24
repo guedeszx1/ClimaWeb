@@ -212,6 +212,7 @@ h4, h5, h6 {
   border-bottom: 2px solid var(--border);
   margin-bottom: 24px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab-button {
@@ -226,7 +227,8 @@ h4, h5, h6 {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: var(--transition);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
   letter-spacing: 0.01em;
 }
 
@@ -262,9 +264,31 @@ h4, h5, h6 {
   max-width: 100%;
 }
 
+.dashboard-sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
 @media (max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+  .dashboard-sidebar {
+    position: static;
+    min-height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
   }
 }
 
