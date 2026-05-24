@@ -397,19 +397,48 @@ export default function ClimaDashboard({ session }) {
       regionMap[reg][mass] = (regionMap[reg][mass] || 0) + 1
     })
 
-    const regionChildren = Object.entries(regionMap).map(([region, massCounts]) => {
-      const children = Object.entries(massCounts).map(([mass, count]) => ({
-        name: mass,
-        value: count,
-        color: GLOSSARIO[mass]?.cor || 'var(--text-secondary)'
-      }))
-      return {
-        name: region,
-        children
-      }
+    const labels = []
+    const parents = []
+    const values = []
+    const colors = []
+
+    let totalGeral = 0
+
+    Object.entries(regionMap).forEach(([region, massCounts]) => {
+      const regionTotal = Object.values(massCounts).reduce((a, b) => a + b, 0)
+      totalGeral += regionTotal
+      
+      labels.push(region)
+      parents.push("Brasil")
+      values.push(regionTotal)
+      colors.push('rgba(15, 23, 42, 0.4)')
+
+      Object.entries(massCounts).forEach(([mass, count]) => {
+        labels.push(`${mass} (${region})`)
+        parents.push(region)
+        values.push(count)
+        colors.push(GLOSSARIO[mass]?.cor || 'var(--text-secondary)')
+      })
     })
 
-    return regionChildren
+    if (labels.length > 0) {
+      labels.push("Brasil")
+      parents.push("")
+      values.push(totalGeral)
+      colors.push('transparent')
+    }
+
+    return [{
+      type: "treemap",
+      labels: labels,
+      parents: parents,
+      values: values,
+      textinfo: "label+value+percent parent",
+      hoverinfo: "label+value+percent parent",
+      marker: { colors: colors },
+      branchvalues: "total",
+      tiling: { packing: "squarify" }
+    }]
   }, [filteredData])
 
   // Daily map records for Tab 3
@@ -793,29 +822,54 @@ export default function ClimaDashboard({ session }) {
 
             {/* TAB 1: Distribuição Espacial */}
             {activeTab === 'espacial' && (
-              <div className="responsive-grid-two-cols">
-                <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }} id="chart-contagem-dias">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>📊 Contagem de Dias por Massa de Ar</h4>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '24px' }}>Dias totais em que a massa esteve ativa (filtros aplicados)</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div className="responsive-grid-two-cols">
+                  <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }} id="chart-contagem-dias">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>📊 Contagem de Dias por Massa de Ar</h4>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '24px' }}>Dias totais em que a massa esteve ativa (filtros aplicados)</p>
+                      </div>
+                    </div>
+                    
+                    <div style={{ width: '100%', height: '320px', marginTop: 'auto' }}>
+                      <Plot
+                        data={[{
+                          type: 'bar',
+                          x: barChartSpatialData.map(d => d.Dias),
+                          y: barChartSpatialData.map(d => d.name),
+                          orientation: 'h',
+                          marker: { color: barChartSpatialData.map(d => d.fill) },
+                          text: barChartSpatialData.map(d => String(d.Dias)),
+                          textposition: 'auto',
+                          hoverinfo: 'y+text'
+                        }]}
+                        layout={{
+                          ...plotlySpatialLayout,
+                          autosize: true
+                        }}
+                        style={{ width: '100%', height: '100%' }}
+                        useResizeHandler={true}
+                        config={{ responsive: true, displaylogo: false }}
+                      />
                     </div>
                   </div>
-                  
-                  <div style={{ width: '100%', height: '320px', marginTop: 'auto' }}>
+
+                  <BrazilMap regionMassMap={spatialRegionMap} title="Geral (Moda por Região)" />
+                </div>
+                
+                {/* Treemap Section */}
+                <div className="glass-card" style={{ padding: '24px' }}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>🗺️ Proporção Geográfica (Treemap)</h4>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Mapeamento hierárquico das massas de ar por região do Brasil</p>
+                  </div>
+                  <div style={{ width: '100%', height: '400px' }}>
                     <Plot
-                      data={[{
-                        type: 'bar',
-                        x: barChartSpatialData.map(d => d.Dias),
-                        y: barChartSpatialData.map(d => d.name),
-                        orientation: 'h',
-                        marker: { color: barChartSpatialData.map(d => d.fill) },
-                        text: barChartSpatialData.map(d => String(d.Dias)),
-                        textposition: 'auto',
-                        hoverinfo: 'y+text'
-                      }]}
+                      data={treemapData}
                       layout={{
                         ...plotlySpatialLayout,
+                        margin: { t: 10, l: 10, r: 10, b: 10 },
                         autosize: true
                       }}
                       style={{ width: '100%', height: '100%' }}
@@ -824,8 +878,6 @@ export default function ClimaDashboard({ session }) {
                     />
                   </div>
                 </div>
-
-                <BrazilMap regionMassMap={spatialRegionMap} title="Geral (Moda por Região)" />
               </div>
             )}
 
