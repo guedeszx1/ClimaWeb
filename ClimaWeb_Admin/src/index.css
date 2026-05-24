@@ -1,11 +1,472 @@
-* {
+/* =========================================================
+   ClimaWeb Admin — Academic Dashboard
+   Universidade de Brasília · LCGEA · PIBIC
+   Fonte: Helvetica Neue (sistema) | fallback: Arial, sans-serif
+   ========================================================= */
+
+/* ── Variáveis de tema (dark — padrão) ───────────────────── */
+:root,
+[data-theme="dark"] {
+  --bg-primary:    #111418;
+  --bg-secondary:  #1a1f27;
+  --bg-card:       #1e242e;
+  --bg-card-alt:   #232a35;
+
+  --border:        #2d3748;
+  --border-light:  #3a4556;
+
+  --text-primary:  #e8ecf0;
+  --text-secondary:#9aa5b4;
+  --text-muted:    #5c6e82;
+
+  --primary:       #3b82f6;
+  --primary-dark:  #2563eb;
+  --primary-muted: rgba(59, 130, 246, 0.14);
+
+  --success:       #22c55e;
+  --danger:        #ef4444;
+  --warning:       #f59e0b;
+
+  --unb-blue:      #003DA5;
+
+  --sidebar-width: 270px;
+  --radius:        6px;
+  --radius-lg:     10px;
+  --transition:    all 0.18s ease;
+
+  color-scheme: dark;
+}
+
+/* ── Variáveis de tema claro ─────────────────────────────── */
+[data-theme="light"] {
+  --bg-primary:    #f4f5f7;
+  --bg-secondary:  #eaecef;
+  --bg-card:       #ffffff;
+  --bg-card-alt:   #f0f2f5;
+
+  --border:        #d0d7de;
+  --border-light:  #b0bac5;
+
+  --text-primary:  #1a2330;
+  --text-secondary:#4a5568;
+  --text-muted:    #718096;
+
+  --primary:       #1d4ed8;
+  --primary-dark:  #1e40af;
+  --primary-muted: rgba(29, 78, 216, 0.1);
+
+  --success:       #16a34a;
+  --danger:        #dc2626;
+  --warning:       #d97706;
+
+  --unb-blue:      #003DA5;
+
+  color-scheme: light;
+}
+
+/* ── Reset ───────────────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* ── Base ────────────────────────────────────────────────── */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: #121212;
-  color: #ffffff;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Tipografia ──────────────────────────────────────────── */
+h1, h2, h3 {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+h4, h5, h6 {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ── Cartão padrão ───────────────────────────────────────── */
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+[data-theme="light"] .glass-card {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.glass-card:hover {
+  border-color: var(--border-light);
+}
+
+/* ── Inputs e Selects ────────────────────────────────────── */
+.premium-select,
+.premium-input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  outline: none;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.875rem;
+  width: 100%;
+  transition: var(--transition);
+}
+
+.premium-select:focus,
+.premium-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-muted);
+}
+
+.premium-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: var(--calendar-icon-filter, invert(0.6) brightness(1.2));
+  cursor: pointer;
+}
+
+[data-theme="light"] .premium-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0) brightness(0.5);
+}
+
+/* ── Botões ──────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  letter-spacing: 0.01em;
+}
+.btn-primary:hover  { background: var(--primary-dark); }
+.btn-primary:active { opacity: 0.85; }
+
+.btn-secondary {
+  background: var(--bg-card-alt);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-secondary:hover {
+  border-color: var(--border-light);
+  background: var(--bg-secondary);
+}
+
+/* ── Botão de tema ───────────────────────────────────────── */
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 5px 10px;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.theme-toggle-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+/* ── Abas ────────────────────────────────────────────────── */
+.tab-container {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.tab-button {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  color: var(--text-muted);
+  padding: 10px 20px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+  letter-spacing: 0.01em;
+}
+
+.tab-button:hover {
+  color: var(--text-primary);
+  background: var(--primary-muted);
+}
+
+.tab-button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 700;
+}
+
+/* ── Mapa SVG ────────────────────────────────────────────── */
+.br-region {
+  transition: var(--transition);
+  stroke: var(--bg-primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  cursor: pointer;
+}
+.br-region:hover {
+  filter: brightness(1.15);
+}
+
+/* ── Layout Principal ────────────────────────────────────── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  gap: 0;
+  min-height: 100vh;
+  max-width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Grades Responsivas ──────────────────────────────────── */
+.responsive-grid-two-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.responsive-grid-two-cols-asymmetric {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.responsive-grid-equal-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.responsive-grid-form-viewer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 20px;
+}
+
+.responsive-grid-three-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1200px) {
+  .responsive-grid-two-cols,
+  .responsive-grid-two-cols-asymmetric,
+  .responsive-grid-equal-cols,
+  .responsive-grid-form-viewer {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .responsive-grid-three-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Linha de KPIs ───────────────────────────────────────── */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  border-left: 3px solid var(--primary);
+}
+
+.metric-val {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  margin-top: 6px;
+  color: var(--text-primary);
+}
+
+.metric-delta {
+  font-size: 0.78rem;
+  margin-top: 6px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.metric-delta.positive { color: var(--success); }
+.metric-delta.negative { color: var(--danger); }
+.metric-delta.neutral  { color: var(--text-muted); }
+
+/* ── Tabelas ─────────────────────────────────────────────── */
+.premium-table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.premium-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.premium-table th {
+  background: var(--bg-card-alt);
+  padding: 11px 14px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.premium-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.premium-table tr:last-child td {
+  border-bottom: none;
+}
+
+.premium-table tr:hover td {
+  background: var(--primary-muted);
+  color: var(--text-primary);
+}
+
+.premium-table tr.selected td {
+  background: var(--primary-muted);
+  color: var(--text-primary);
+  border-left: 3px solid var(--primary);
+}
+
+/* ── Tooltip ─────────────────────────────────────────────── */
+.custom-tooltip {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.tooltip-title {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+/* ── Rodapé / UnB + LCGEA branding ──────────────────────── */
+.unb-footer {
+  padding: 14px 10px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.unb-logos-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Em modo escuro: fundo branco arredondado para preservar as cores originais */
+.unb-logo-wrap {
+  background: #fff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="light"] .unb-logo-wrap {
+  background: transparent;
+  padding: 2px 4px;
+}
+
+.unb-logo-wrap img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.lcgea-logo-wrap img {
+  height: 40px;
+}
+
+.unb-footer-text {
+  font-size: 0.67rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.unb-footer-text strong {
+  color: var(--text-secondary);
+  display: block;
+  font-size: 0.72rem;
 }

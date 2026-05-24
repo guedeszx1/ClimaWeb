@@ -32,14 +32,14 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ padding: '40px', backgroundColor: '#121212', color: '#fff', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+    <div style={{ padding: '40px', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '20px' }}>
         <h2>🖥️ Monitoramento da Máquina Virtual (Tempo Real)</h2>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           <span style={{ color: connected ? '#4CAF50' : '#f44336', fontWeight: 'bold' }}>
             {connected ? '🟢 Backend Online' : '🔴 Backend Offline'}
           </span>
-          <button onClick={handleLogout} style={{ padding: '10px 20px', background: '#f44336', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Deslogar Admin</button>
+          <button onClick={handleLogout} style={{ padding: '10px 20px', background: '#f44336', color: 'var(--text-primary)', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Deslogar Admin</button>
         </div>
       </div>
 
@@ -47,10 +47,10 @@ export default function Dashboard() {
         <h3 style={{ marginBottom: '20px' }}>⚡ Uso de Processamento (CPU %)</h3>
         <ResponsiveContainer width="99%" height={250}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+            <CartesianGrid strokeDasharray="3 3" stroke='var(--bg-card)' />
             <XAxis dataKey="timestamp" tickFormatter={(time) => new Date(time * 1000).toLocaleTimeString()} stroke="#888" />
             <YAxis domain={[0, 100]} stroke="#888" />
-            <Tooltip labelFormatter={(time) => new Date(time * 1000).toLocaleTimeString()} contentStyle={{ backgroundColor: '#222', border: 'none', color: '#fff' }} />
+            <Tooltip labelFormatter={(time) => new Date(time * 1000).toLocaleTimeString()} contentStyle={{ backgroundColor: '#222', border: 'none', color: 'var(--text-primary)' }} />
             <Legend />
             <Line type="monotone" name="CPU (%)" dataKey="cpu" stroke="#8884d8" strokeWidth={3} isAnimationActive={false} dot={false} />
           </LineChart>
@@ -61,10 +61,10 @@ export default function Dashboard() {
         <h3 style={{ marginBottom: '20px' }}>🧠 Consumo de Memória (RAM %)</h3>
         <ResponsiveContainer width="99%" height={250}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+            <CartesianGrid strokeDasharray="3 3" stroke='var(--bg-card)' />
             <XAxis dataKey="timestamp" tickFormatter={(time) => new Date(time * 1000).toLocaleTimeString()} stroke="#888" />
             <YAxis domain={[0, 100]} stroke="#888" />
-            <Tooltip labelFormatter={(time) => new Date(time * 1000).toLocaleTimeString()} contentStyle={{ backgroundColor: '#222', border: 'none', color: '#fff' }} />
+            <Tooltip labelFormatter={(time) => new Date(time * 1000).toLocaleTimeString()} contentStyle={{ backgroundColor: '#222', border: 'none', color: 'var(--text-primary)' }} />
             <Legend />
             <Line type="monotone" name="RAM (%)" dataKey="ram_percent" stroke="#82ca9d" strokeWidth={3} isAnimationActive={false} dot={false} />
           </LineChart>
