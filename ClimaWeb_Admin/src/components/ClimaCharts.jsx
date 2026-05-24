@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
-import Plot from 'react-plotly.js'
+import Plotly from 'plotly.js-dist-min'
+import createPlotlyComponent from 'react-plotly.js/factory'
+const Plot = createPlotlyComponent.default ? createPlotlyComponent.default(Plotly) : createPlotlyComponent(Plotly)
 import { GLOSSARIO } from './BrazilMap'
 
 // Helper to convert English month names to Portuguese

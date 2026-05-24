@@ -5,7 +5,9 @@ import ClimaCharts from './ClimaCharts'
 import Glossary from './Glossary'
 import AuditPanel from './AuditPanel'
 import DataExplorer from './DataExplorer'
-import Plot from 'react-plotly.js'
+import Plotly from 'plotly.js-dist-min'
+import createPlotlyComponent from 'react-plotly.js/factory'
+const Plot = createPlotlyComponent.default ? createPlotlyComponent.default(Plotly) : createPlotlyComponent(Plotly)
 import { Treemap, Tooltip } from 'recharts'
 
 const CustomizedTreemapContent = (props) => {
