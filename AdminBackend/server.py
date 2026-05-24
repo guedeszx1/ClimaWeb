@@ -27,7 +27,7 @@ last_alerts = {
     "cpu": 0,
     "ram": 0
 }
-ALERT_COOLDOWN = 600  # 10 minutos em segundos
+ALERT_COOLDOWN = 300  # 5 minutos em segundos
 
 @app.get("/")
 def read_root():
@@ -105,8 +105,8 @@ async def background_task():
                     last_alerts["cpu"] = current_time
                     print("[Telegram Bot] Alerta de CPU enviado com sucesso.")
                     
-        # Alerta de RAM crítica (> 90%)
-        if ram_percent > 90.0:
+        # Alerta de RAM crítica (> 85%)
+        if ram_percent > 85.0:
             if current_time - last_alerts["ram"] > ALERT_COOLDOWN:
                 ram_used_gb = mem.used / (1024 ** 3)
                 ram_total_gb = mem.total / (1024 ** 3)

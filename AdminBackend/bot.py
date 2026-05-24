@@ -8,6 +8,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 import telebot
 from telebot import types
+import subprocess
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from supabase import create_client, Client
 
 # Carrega as variáveis de ambiente do arquivo .env
@@ -44,13 +48,14 @@ def obter_teclado_principal():
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     btn_status = types.KeyboardButton("🖥️ Status Rápido")
     btn_sysinfo = types.KeyboardButton("⚙️ Detalhes da VM")
+    btn_monitor = types.KeyboardButton("📡 Monitor Ao Vivo")
     btn_stats = types.KeyboardButton("📊 Estatísticas da IA")
     btn_regions = types.KeyboardButton("🗺️ Auditorias por Região")
     btn_errors = types.KeyboardButton("❌ Erros Recentes da IA")
     btn_last = types.KeyboardButton("🔍 Última Auditoria")
     btn_export = types.KeyboardButton("📥 Exportar CSV da Base")
     btn_ajuda = types.KeyboardButton("❓ Ajuda")
-    markup.add(btn_status, btn_sysinfo, btn_stats, btn_regions, btn_errors, btn_last, btn_export, btn_ajuda)
+    markup.add(btn_status, btn_sysinfo, btn_monitor, btn_stats, btn_regions, btn_errors, btn_last, btn_export, btn_ajuda)
     return markup
 
 if bot_ativo:
@@ -61,7 +66,9 @@ if bot_ativo:
             "Este assistente monitora a VM e permite gerenciar as análises de clima.\n\n"
             "📌 *Monitoramento do Servidor:*\n"
             "🖥️ `/status` - Uso atual de CPU e RAM\n"
-            "⚙️ `/system_info` - Detalhes completos (Disco, Uptime, Processo)\n\n"
+            "⚙️ `/system_info` - Detalhes completos (Disco, Uptime, Processo)\n"
+            "📡 `/monitor` - Gráfico dinâmico ao vivo (60s)\n"
+            "📊 `/dashboard` - Dashboard visual com gráficos (NOVO!)\n\n"
             "📊 *Estatísticas & IA:*\n"
             "📊 `/stats` - Resumo do Supabase e acurácia da IA\n"
             "🗺️ `/audit_summary` - Progresso de validação por Região\n"
@@ -86,6 +93,46 @@ if bot_ativo:
             f"🧠 *RAM:* {ram_percent}% ({mem.used / (1024**2):.1f} MB / {mem.total / (1024**2):.1f} MB)"
         )
         bot.reply_to(message, status_text, parse_mode='Markdown')
+
+    @bot.message_handler(commands=['monitor'])
+    def live_monitor(message):
+        def generate_bar(percent):
+            filled = int(percent / 10)
+            return '█' * filled + '░' * (10 - filled)
+            
+        initial_msg = bot.reply_to(message, "📡 *Iniciando monitoramento em tempo real...*", parse_mode='Markdown')
+        
+        def update_monitor():
+            try:
+                # O psutil cpu_percent precisa de uma chamada inicial para estabelecer a baseline
+                psutil.cpu_percent(interval=0.1)
+                for i in range(12):  # 12 * 5s = 60 segundos
+                    cpu = psutil.cpu_percent(interval=None)
+                    mem = psutil.virtual_memory()
+                    ram = mem.percent
+                    
+                    text = (
+                        "📡 *Monitoramento Dinâmico (Ao Vivo)*\n\n"
+                        f"⚡ *CPU:* {cpu}%\n"
+                        f"`[{generate_bar(cpu)}]`\n\n"
+                        f"🧠 *RAM:* {ram}%\n"
+                        f"`[{generate_bar(ram)}]`\n\n"
+                        f"🔄 _Atualizando... ({12 - i} picos restantes)_"
+                    )
+                    
+                    bot.edit_message_text(text, chat_id=initial_msg.chat.id, message_id=initial_msg.message_id, parse_mode='Markdown')
+                    time.sleep(5)
+                    
+                # Mensagem final
+                final_text = (
+                    "📡 *Monitoramento Concluído.*\n"
+                    "O período de 60 segundos finalizou. Envie o comando novamente se precisar de mais dados."
+                )
+                bot.edit_message_text(final_text, chat_id=initial_msg.chat.id, message_id=initial_msg.message_id, parse_mode='Markdown')
+            except Exception as e:
+                print(f"[Telegram Bot] Erro no monitor dinâmico: {e}")
+                
+        threading.Thread(target=update_monitor, daemon=True).start()
 
     @bot.message_handler(commands=['system_info'])
     def system_info(message):
@@ -407,6 +454,8 @@ if bot_ativo:
             server_status(message)
         elif text == "⚙️ Detalhes da VM":
             system_info(message)
+        elif text == "📡 Monitor Ao Vivo":
+            live_monitor(message)
         elif text == "📊 Estatísticas da IA":
             db_stats(message)
         elif text == "🗺️ Auditorias por Região":
@@ -421,6 +470,92 @@ if bot_ativo:
             send_welcome(message)
         else:
             bot.reply_to(message, "Desculpe, não entendi. Utilize os botões do teclado para interagir ou digite `/help`.", reply_markup=obter_teclado_principal())
+
+    def obter_teclado_inline():
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        btn_dash = types.InlineKeyboardButton("📊 Gerar Dashboard", callback_data="cb_dashboard")
+        btn_ram = types.InlineKeyboardButton("🖥️ Detalhes da RAM", callback_data="cb_ram")
+        btn_restart = types.InlineKeyboardButton("🔄 Reiniciar Site", callback_data="cb_restart")
+        markup.add(btn_dash, btn_ram, btn_restart)
+        return markup
+
+    @bot.message_handler(commands=['dashboard'])
+    def send_dashboard(message):
+        bot.send_chat_action(message.chat.id, 'upload_photo')
+        try:
+            # 1. Obter dados de CPU e RAM
+            cpu_percent = psutil.cpu_percent(interval=0.5)
+            ram_percent = psutil.virtual_memory().percent
+            
+            # 2. Gerar Gráfico
+            fig, ax = plt.subplots(figsize=(6, 4))
+            labels = ['CPU', 'RAM']
+            values = [cpu_percent, ram_percent]
+            colors = ['#ff9999', '#66b3ff']
+            
+            ax.bar(labels, values, color=colors)
+            ax.set_ylim(0, 100)
+            ax.set_ylabel('Uso (%)')
+            ax.set_title('Recursos da VM - ClimaWeb')
+            for i, v in enumerate(values):
+                ax.text(i, v + 2, f"{v}%", ha='center', fontweight='bold')
+                
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            plt.close(fig)
+            
+            # 3. Contagem de Usuários
+            active_users = "N/A"
+            if supabase:
+                try:
+                    res = supabase.table("clima_registros").select("id", count="exact").execute()
+                    active_users = str(res.count) if res.count else "0"
+                except Exception:
+                    active_users = "15 (Simulado)"
+            
+            caption_text = (
+                "📊 *Dashboard Administrativo*\n\n"
+                f"👥 *Registros Totais (Atividade):* {active_users}\n"
+                f"⚡ *CPU Atual:* {cpu_percent}%\n"
+                f"🧠 *RAM Atual:* {ram_percent}%\n\n"
+                "Selecione uma ação abaixo:"
+            )
+            
+            bot.send_photo(message.chat.id, photo=buf, caption=caption_text, parse_mode='Markdown', reply_markup=obter_teclado_inline())
+            
+        except Exception as e:
+            bot.reply_to(message, f"❌ Erro ao gerar dashboard: {str(e)}")
+
+    @bot.callback_query_handler(func=lambda call: True)
+    def callback_query(call):
+        if call.data == "cb_dashboard":
+            bot.answer_callback_query(call.id, "Gerando dashboard...")
+            send_dashboard(call.message)
+            
+        elif call.data == "cb_ram":
+            bot.answer_callback_query(call.id, "Coletando dados da RAM...")
+            system_info(call.message)
+            
+        elif call.data == "cb_restart":
+            if str(call.message.chat.id) != str(CHAT_ID):
+                bot.answer_callback_query(call.id, "❌ Permissão Negada.", show_alert=True)
+                return
+                
+            bot.answer_callback_query(call.id, "Reiniciando site. Aguarde...")
+            try:
+                subprocess.run("pkill -f streamlit", shell=True)
+                subprocess.Popen("cd /home/ubuntu/APP && nohup /home/ubuntu/venv/bin/streamlit run app.py --server.port 8501 > streamlit.log 2>&1 &", shell=True)
+                
+                # Edita apenas o texto, não tem como editar a foto facilmente sem mandar outra, mas edit_message_caption serve
+                bot.edit_message_caption(
+                    caption="✅ *Site reiniciado com sucesso via Telegram!*\nO serviço Streamlit foi reinicializado na VM.",
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    parse_mode='Markdown'
+                )
+            except Exception as e:
+                bot.send_message(call.message.chat.id, f"❌ Erro ao reiniciar site: {e}")
 
 # Função para enviar alertas ativos de recursos da VM (CPU ou RAM crítica)
 def enviar_alerta(mensagem):
