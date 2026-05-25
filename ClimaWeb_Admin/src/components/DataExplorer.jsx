@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { GraphicWalker } from '@kanaries/graphic-walker'
 
-export default function DataExplorer({ filteredData }) {
+export default function DataExplorer({ filteredData, role }) {
   // Infer fields for Graphic Walker based on the first object keys
   const fields = useMemo(() => {
     if (!filteredData || filteredData.length === 0) return []

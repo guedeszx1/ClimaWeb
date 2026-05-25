@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../supabaseClient'
+import { useAuth } from '../contexts/AuthContext'
 import BrazilMap, { GLOSSARIO } from './BrazilMap'
 import ClimaCharts from './ClimaCharts'
 import Glossary from './Glossary'
@@ -68,7 +69,8 @@ const CustomizedTreemapContent = (props) => {
 };
 
 
-export default function ClimaDashboard({ session }) {
+export default function ClimaDashboard() {
+  const { role, signOut } = useAuth()
   const [allData, setAllData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -718,6 +720,15 @@ export default function ClimaDashboard({ session }) {
             <button onClick={toggleTheme} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.78rem' }}>
               {theme === 'dark' ? 'Mudar para Claro' : 'Mudar para Escuro'}
             </button>
+            {role === 'guest' ? (
+              <button onClick={() => window.location.href = '/login'} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.78rem' }}>
+                👤 Entrar
+              </button>
+            ) : (
+              <button onClick={signOut} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.78rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}>
+                Sair
+              </button>
+            )}
           </div>
         </div>
 
@@ -888,7 +899,7 @@ export default function ClimaDashboard({ session }) {
 
             {/* TAB 3: Explorador de Dados (Graphic Walker) */}
             {activeTab === 'explorer' && (
-              <DataExplorer filteredData={filteredData} />
+              <DataExplorer filteredData={filteredData} role={role} />
             )}
 
             {/* TAB 4: Relatório Diário (Interactive Table + Map) */}
@@ -921,10 +932,18 @@ export default function ClimaDashboard({ session }) {
                       />
                     </div>
                     <div style={{ display: 'flex', gap: '8px', flex: 1.2, minWidth: '220px' }}>
-                      <button onClick={() => handleExportCSV(true)} className="btn-primary" style={{ padding: '10px 12px', fontSize: '0.8rem', flex: 1 }}>
+                      <button 
+                        onClick={() => handleExportCSV(true)} 
+                        className="btn-primary" 
+                        style={{ padding: '10px 12px', fontSize: '0.8rem', flex: 1 }}
+                      >
                         📥 CSV Validada
                       </button>
-                      <button onClick={() => handleExportCSV(false)} className="btn-secondary" style={{ padding: '10px 12px', fontSize: '0.8rem', flex: 1 }}>
+                      <button 
+                        onClick={() => handleExportCSV(false)} 
+                        className="btn-secondary" 
+                        style={{ padding: '10px 12px', fontSize: '0.8rem', flex: 1 }}
+                      >
                         📥 CSV IA
                       </button>
                     </div>
@@ -1028,7 +1047,7 @@ export default function ClimaDashboard({ session }) {
 
             {/* TAB 5: Auditoria */}
             {activeTab === 'auditoria' && (
-              <AuditPanel allData={allData} onRefreshData={handleRefresh} />
+              <AuditPanel allData={allData} onRefreshData={handleRefresh} role={role} />
             )}
 
 

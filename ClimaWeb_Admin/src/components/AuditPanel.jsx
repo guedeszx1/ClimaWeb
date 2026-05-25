@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { downloadChartAsPng } from '../utils/exportChart'
 import { GLOSSARIO } from './BrazilMap'
 
-export default function AuditPanel({ allData = [], onRefreshData }) {
+export default function AuditPanel({ allData = [], onRefreshData, role }) {
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedRegion, setSelectedRegion] = useState('')
   const [iaCorrect, setIaCorrect] = useState('Sim')
@@ -408,10 +408,11 @@ export default function AuditPanel({ allData = [], onRefreshData }) {
             <button 
               onClick={handleSaveAudit} 
               className="btn-primary" 
-              style={{ width: '100%', padding: '14px', marginTop: 'auto' }}
-              disabled={isSaving || !currentRecord}
+              style={{ width: '100%', padding: '14px', marginTop: 'auto', opacity: role === 'guest' ? 0.5 : 1, cursor: role === 'guest' ? 'not-allowed' : 'pointer' }}
+              disabled={isSaving || !currentRecord || role === 'guest'}
+              title={role === 'guest' ? "Visitantes não podem editar registros" : ""}
             >
-              {isSaving ? 'Salvando...' : '💾 Salvar Validação'}
+              {isSaving ? 'Salvando...' : (role === 'guest' ? '🔒 Bloqueado' : '💾 Salvar Validação')}
             </button>
 
           </div>

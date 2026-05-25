@@ -4,7 +4,8 @@ import csv
 import time
 import psutil
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
+import requests
 from dotenv import load_dotenv
 import telebot
 from telebot import types
@@ -77,6 +78,7 @@ if bot_ativo:
             "📥 *Acesso a Dados & Busca:*\n"
             "📥 `/export` - Exporta e envia a base de auditoria completa em CSV\n"
             "🔍 `/search <termo>` - Busca termos nas descrições das cartas\n"
+            "🗂️ `/export_charts <data_ini> <data_fim>` - Exporta as cartas sinóticas de um período\n"
             "📅 `/chart <AAAA-MM-DD>` - Busca o quadro de massas de um dia"
         )
         bot.reply_to(message, welcome_text, parse_mode='Markdown', reply_markup=obter_teclado_principal())
@@ -179,7 +181,7 @@ if bot_ativo:
         info_text = (
             "⚙️ *Informações Detalhadas do Servidor:*\n\n"
             f"🕒 *Uptime da Máquina:* {uptime_str}\n"
-            f"💾 *Espaço em Disco:* {disk.percent}% livre ({disk_free:.1f} GB de {disk_total:.1f} GB)\n"
+            f"💾 *Espaço em Disco:* {disk.percent}% em uso ({disk_free:.1f} GB livres de {disk_total:.1f} GB)\n"
             f"⚡ *Threads Ativas:* {threading.active_count()}\n"
             f"📅 *Hora do Servidor:* {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n"
             f"{top_text}"
@@ -446,8 +448,72 @@ if bot_ativo:
         except Exception as e:
             bot.reply_to(message, f"❌ Erro ao consultar data: {str(e)}")
 
+    @bot.message_handler(commands=['export_charts'])
+    def export_charts(message):
+        args = message.text.split()
+        if len(args) != 3:
+            bot.reply_to(message, "💡 *Uso correto:* `/export_charts <data_inicial> <data_final>`\nExemplo: `/export_charts 2025-05-01 2025-05-03`", parse_mode='Markdown')
+            return
+            
+        data_ini_str = args[1]
+        data_fim_str = args[2]
+        
+        try:
+            data_ini = datetime.strptime(data_ini_str, "%Y-%m-%d")
+            data_fim = datetime.strptime(data_fim_str, "%Y-%m-%d")
+        except ValueError:
+            bot.reply_to(message, "❌ Formato de data inválido. Use AAAA-MM-DD.")
+            return
+            
+        if (data_fim - data_ini).days > 10:
+            bot.reply_to(message, "❌ O período máximo permitido é de 10 dias para evitar sobrecarga no Telegram (limite de envio).")
+            return
+            
+        if (data_fim - data_ini).days < 0:
+            bot.reply_to(message, "❌ A data final deve ser maior ou igual à data inicial.")
+            return
+            
+        bot.send_chat_action(message.chat.id, 'upload_photo')
+        
+        import os
+        
+        datas = [data_ini + timedelta(days=x) for x in range((data_fim - data_ini).days + 1)]
+        media_group = []
+        
+        base_dir = "/home/ubuntu/APP/cartas_sinoticas"
+        
+        for data_obj in datas:
+            data_formatada = data_obj.strftime("%Y%m%d")
+            ano = data_obj.strftime("%Y")
+            
+            # Tentar baixar do arquivo local (00Z)
+            # Nome padrao: web_AS_analise_YYYYMMDD0000_+0.png
+            file_name = f"web_AS_analise_{data_formatada}0000_+0.png"
+            file_path = os.path.join(base_dir, ano, file_name)
+            
+            success = False
+            try:
+                if os.path.exists(file_path):
+                    with open(file_path, 'rb') as f:
+                        file_data = f.read()
+                    media_group.append(types.InputMediaPhoto(file_data, caption=f"🗺️ Carta Sinótica - {data_obj.strftime('%d/%m/%Y')}"))
+                    success = True
+            except Exception as e:
+                pass
+            
+            if not success:
+                bot.send_message(message.chat.id, f"⚠️ A carta do dia {data_obj.strftime('%d/%m/%Y')} não foi encontrada no banco de imagens local.")
+                
+        if media_group:
+            # Dividir em blocos de 10 fotos (limite do Telegram)
+            for i in range(0, len(media_group), 10):
+                bot.send_media_group(message.chat.id, media_group[i:i+10])
+                time.sleep(2)
+        else:
+            bot.reply_to(message, "❌ Nenhuma imagem de carta sinótica foi encontrada online para o período solicitado.")
+
     # Processamento de texto para botões do teclado customizado
-    @bot.message_handler(func=lambda msg: True)
+    @bot.message_handler(func=lambda msg: msg.text and not msg.text.startswith('/'))
     def handle_text_buttons(message):
         text = message.text
         if text == "🖥️ Status Rápido":
@@ -510,9 +576,10 @@ if bot_ativo:
             if supabase:
                 try:
                     res = supabase.table("clima_registros").select("id", count="exact").execute()
-                    active_users = str(res.count) if res.count else "0"
-                except Exception:
-                    active_users = "15 (Simulado)"
+                    active_users = str(res.count) if res.count is not None else "0"
+                except Exception as e:
+                    print(f"Error fetching count: {e}")
+                    active_users = "Erro"
             
             caption_text = (
                 "📊 *Dashboard Administrativo*\n\n"
@@ -529,7 +596,23 @@ if bot_ativo:
 
     @bot.callback_query_handler(func=lambda call: True)
     def callback_query(call):
-        if call.data == "cb_dashboard":
+        if call.data.startswith("approve_"):
+            uid = call.data.split("_")[1]
+            try:
+                supabase.table("perfis").update({"status": "aprovado"}).eq("id", uid).execute()
+                bot.edit_message_text("✅ *Usuário Aprovado com sucesso!* Acesso liberado.", chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode='Markdown')
+            except Exception as e:
+                bot.answer_callback_query(call.id, "❌ Erro ao aprovar.")
+                
+        elif call.data.startswith("reject_"):
+            uid = call.data.split("_")[1]
+            try:
+                supabase.table("perfis").update({"status": "recusado"}).eq("id", uid).execute()
+                bot.edit_message_text("❌ *Usuário Recusado.* O acesso permanece bloqueado.", chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode='Markdown')
+            except Exception as e:
+                bot.answer_callback_query(call.id, "❌ Erro ao recusar.")
+
+        elif call.data == "cb_dashboard":
             bot.answer_callback_query(call.id, "Gerando dashboard...")
             send_dashboard(call.message)
             
@@ -570,8 +653,36 @@ def enviar_alerta(mensagem):
 
 # Inicializador (Polling blocking) para desenvolvimento ou teste local standalone
 import threading
+
+notified_users = set()
+def check_pending_users():
+    while True:
+        try:
+            if supabase and bot_ativo and CHAT_ID:
+                res = supabase.table("perfis").select("*").eq("status", "pendente").execute()
+                if res.data:
+                    for user in res.data:
+                        uid = user['id']
+                        if uid not in notified_users:
+                            markup = types.InlineKeyboardMarkup(row_width=2)
+                            btn_approve = types.InlineKeyboardButton("✅ Aprovar", callback_data=f"approve_{uid}")
+                            btn_reject = types.InlineKeyboardButton("❌ Recusar", callback_data=f"reject_{uid}")
+                            markup.add(btn_approve, btn_reject)
+                            
+                            bot.send_message(
+                                CHAT_ID, 
+                                f"🔔 *Nova Solicitação de Cadastro*\n\n📧 *Email:* `{user['email']}`\n\nDeseja aprovar este usuário para acesso ao painel de edição?", 
+                                parse_mode='Markdown',
+                                reply_markup=markup
+                            )
+                            notified_users.add(uid)
+        except Exception as e:
+            print(f"[Telegram Bot] Erro ao checar cadastros pendentes: {e}")
+        time.sleep(15)
+
 if __name__ == "__main__":
     if bot_ativo:
+        threading.Thread(target=check_pending_users, daemon=True).start()
         print("[Telegram Bot] Iniciando escuta (polling)... Pressione Ctrl+C para encerrar.")
         try:
             bot.infinity_polling()
