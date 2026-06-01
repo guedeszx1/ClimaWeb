@@ -2,3 +2,10 @@ __pycache__/
 keys/
 *.exe
 .streamlit/secrets.toml
+*.zip
+*.tar.gz
+*.bak
+ClimaWeb_Admin/wipe_db*.cjs
+ClimaWeb_Admin/test_*.cjs
+climaweb*.conf
+ClimaWeb_Admin/public/cartas_sinoticas/

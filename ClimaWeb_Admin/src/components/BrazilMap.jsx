@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Map, Download } from 'lucide-react'
 import { toPng } from 'html-to-image'
 
 export const GLOSSARIO = {
@@ -110,9 +111,9 @@ export default function BrazilMap({ regionMassMap = {}, title = "" }) {
   return (
     <div ref={containerRef} className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
       <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>🗺️ Distribuição Geográfica {title && `- ${title}`}</h4>
-        <button onClick={exportAsPng} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-          📥 Baixar PNG
+        <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}><Map size={20} /> Distribuição Geográfica {title && `- ${title}`}</h4>
+        <button onClick={exportAsPng} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Download size={14} /> Baixar PNG
         </button>
       </div>
 

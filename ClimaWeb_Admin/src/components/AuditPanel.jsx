@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts'
 import { downloadChartAsPng } from '../utils/exportChart'
 import { GLOSSARIO } from './BrazilMap'
+import { AlertTriangle, Calendar, FileEdit, Bot, Shield, Save, Image, Download, Microscope, ScrollText, Trash2, Lock } from 'lucide-react'
 
 export default function AuditPanel({ allData = [], onRefreshData, role }) {
   const [selectedDate, setSelectedDate] = useState('')
@@ -273,7 +274,9 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
       {/* Todo list of incomplete audits */}
       {incompleteAudits.length > 0 && (
         <div className="glass-card" style={{ padding: '20px', borderLeft: '4px solid var(--warning)' }}>
-          <h4 style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>⚠️ Auditorias Incompletas (To-Do List)</h4>
+          <h4 style={{ color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <AlertTriangle size={20} /> Auditorias Incompletas (To-Do List)
+          </h4>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '14px' }}>
             As datas a seguir possuem algumas regiões validadas e outras pendentes. Conclua-as para garantir a integridade da base de dados:
           </p>
@@ -296,7 +299,7 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
                 }}
                 className="hover-scale"
               >
-                <strong>📅 {g.date}</strong> ({g.audited}/{g.total} regiões)
+                <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Calendar size={14} /> {g.date}</strong> ({g.audited}/{g.total} regiões)
                 <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '4px' }}>
                   Falta: {g.missing.join(', ')}
                 </div>
@@ -311,7 +314,9 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
         
         {/* Validation Form */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px' }}>📝 Formulário de Validação Humana</h4>
+          <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <FileEdit size={20} /> Formulário de Validação Humana
+          </h4>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flexGrow: 1 }}>
             
@@ -343,14 +348,14 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
 
             {currentRecord && (
               <div style={{ background: 'var(--bg-card-alt)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <div style={{ marginBottom: '8px', fontSize: '0.85rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>🤖 Classificação da IA: </span>
+                <div style={{ marginBottom: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Bot size={16} color="var(--text-muted)" /> <span style={{ color: 'var(--text-muted)' }}>Classificação da IA: </span>
                   <strong style={{ color: GLOSSARIO[currentRecord.massa_de_ar_ia]?.cor || 'var(--text-primary)' }}>
                     {currentRecord.massa_de_ar_ia}
                   </strong>
                 </div>
-                <div style={{ marginBottom: '12px', fontSize: '0.85rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>🛡️ Status Atual: </span>
+                <div style={{ marginBottom: '12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Shield size={16} color="var(--text-muted)" /> <span style={{ color: 'var(--text-muted)' }}>Status Atual: </span>
                   <span style={{ color: currentRecord.status_informacao.includes('100% IA') ? '#f59e0b' : '#10b981', fontWeight: '500' }}>
                     {currentRecord.status_informacao}
                   </span>
@@ -412,7 +417,9 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
               disabled={isSaving || !currentRecord || role === 'guest'}
               title={role === 'guest' ? "Visitantes não podem editar registros" : ""}
             >
-              {isSaving ? 'Salvando...' : (role === 'guest' ? '🔒 Bloqueado' : '💾 Salvar Validação')}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                {isSaving ? 'Salvando...' : (role === 'guest' ? <><Lock size={18} /> Bloqueado</> : <><Save size={18} /> Salvar Validação</>)}
+              </div>
             </button>
 
           </div>
@@ -421,7 +428,9 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
         {/* Synoptic Chart & Bounding Boxes Image Viewer */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h4 style={{ color: 'var(--text-primary)' }}>🖼️ Visualizador de Imagens de Análise</h4>
+            <h4 style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Image size={20} /> Visualizador de Imagens de Análise
+            </h4>
             <div style={{ display: 'flex', gap: '6px', background: 'var(--border)', padding: '2px', borderRadius: '6px' }}>
               <button 
                 onClick={() => setActiveImageTab('official')} 
@@ -463,7 +472,7 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
               selectedDate ? (
                 imageError ? (
                   <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>⚠️</div>
+                    <AlertTriangle size={48} style={{ marginBottom: '10px' }} />
                     <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>Imagem Não Encontrada</strong>
                     <span style={{ fontSize: '0.8rem' }}>Não foi possível carregar a carta do dia <strong>{selectedDate}</strong>.<br />Certifique-se de que os arquivos do ano estão na pasta local e linkados no diretório public.</span>
                   </div>
@@ -481,9 +490,9 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
               )
             ) : (
               <img 
-                src="/resultado_debug_inmet.jpg" 
+                src="/resultado_debug_inmet.jpg?v=2" 
                 alt="Gabarito de Detecção da IA"
-                onClick={() => setFullscreenImage("/resultado_debug_inmet.jpg")}
+                onClick={() => setFullscreenImage("/resultado_debug_inmet.jpg?v=2")}
                 style={{ maxWidth: '100%', maxHeight: '420px', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', cursor: 'pointer' }} 
                 onError={(e) => {
                   e.target.style.display = 'none';
@@ -519,7 +528,9 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
         
         {/* Statistical Overview (Scientific Publication Standards) */}
         <div className="glass-card" style={{ padding: '24px' }}>
-          <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px' }}>🔬 Métricas de Desempenho e Matriz de Confusão</h4>
+          <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Microscope size={20} /> Métricas de Desempenho e Matriz de Confusão
+          </h4>
           {statistics.total === 0 ? (
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', padding: '60px 0', textAlign: 'center' }}>
               Nenhum dado auditado disponível para gerar a análise estatística.
@@ -594,7 +605,9 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
               <div style={{ height: '220px', marginTop: '10px' }} id="chart-acuracia-regiao">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                   <h5 style={{ color: 'var(--text-primary)', margin: 0, fontSize: '0.85rem', fontWeight: 'bold' }}>Acurácia Relativa por Região Geográfica (%)</h5>
-                  <button onClick={() => downloadChartAsPng('chart-acuracia-regiao', 'acuracia-regiao')} className="btn-secondary" style={{ padding: '4px 8px', fontSize: '0.65rem' }}>⬇️ Baixar PNG</button>
+                  <button onClick={() => downloadChartAsPng('chart-acuracia-regiao', 'acuracia-regiao')} className="btn-secondary" style={{ padding: '4px 8px', fontSize: '0.65rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Download size={14} /> Baixar PNG
+                  </button>
                 </div>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={statistics.regionAcc} margin={{ top: 15, right: 5, left: -25, bottom: 20 }}>
@@ -627,7 +640,9 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
 
         {/* Historical Audit Logs */}
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px' }}>📜 Histórico de Auditorias e Correções</h4>
+          <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <ScrollText size={20} /> Histórico de Auditorias e Correções
+          </h4>
           {auditedRecords.length === 0 ? (
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', padding: '60px 0', textAlign: 'center', margin: 'auto' }}>
               Nenhuma correção salva no banco de dados.
@@ -684,7 +699,7 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
                             }}
                             className="btn-reset"
                           >
-                            🗑️ Resetar
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Trash2 size={14} /> Resetar</span>
                           </button>
                         </td>
                       </tr>

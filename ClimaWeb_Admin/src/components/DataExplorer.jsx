@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { GraphicWalker } from '@kanaries/graphic-walker'
+import { FlaskConical } from 'lucide-react'
 
 export default function DataExplorer({ filteredData, role }) {
   // Infer fields for Graphic Walker based on the first object keys
@@ -38,7 +39,9 @@ export default function DataExplorer({ filteredData, role }) {
   return (
     <div className="glass-card" style={{ padding: '20px', minHeight: '800px', display: 'flex', flexDirection: 'column' }}>
       <div style={{ marginBottom: '16px' }}>
-        <h4 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '4px' }}>🧪 Laboratório de Exploração Livre</h4>
+        <h4 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <FlaskConical size={24} /> Laboratório de Exploração Livre
+        </h4>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
           Arraste e solte colunas (Dimensões e Medidas) para os eixos para criar seus próprios gráficos e tabelas dinâmicas.
         </p>

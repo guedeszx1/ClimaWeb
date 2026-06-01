@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
+import { Cloud, Sun, Moon, User, BarChart2, Search, BookOpen, RefreshCw, Scale, FlaskConical, BarChart3, Map, Calendar, Download, FileText, Bookmark } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import BrazilMap, { GLOSSARIO } from './BrazilMap'
@@ -6,6 +7,8 @@ import ClimaCharts from './ClimaCharts'
 import Glossary from './Glossary'
 import AuditPanel from './AuditPanel'
 import DataExplorer from './DataExplorer'
+import Login from './Login'
+import UserProfile from './UserProfile'
 import Plotly from 'plotly.js-dist-min'
 import createPlotlyComponent from 'react-plotly.js/factory'
 const Plot = createPlotlyComponent.default ? createPlotlyComponent.default(Plotly) : createPlotlyComponent(Plotly)
@@ -70,7 +73,7 @@ const CustomizedTreemapContent = (props) => {
 
 
 export default function ClimaDashboard() {
-  const { role, signOut } = useAuth()
+  const { role, session, signOut } = useAuth()
   const [allData, setAllData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -91,7 +94,15 @@ export default function ClimaDashboard() {
   // Active Tab
   const [activeTab, setActiveTab] = useState('espacial')
 
+  // Save Analysis Modal States
+  const [showSaveAnalysisModal, setShowSaveAnalysisModal] = useState(false)
+  const [saveTitle, setSaveTitle] = useState('')
+  const [saveDescription, setSaveDescription] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
+  // Modais de Login/Perfil
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
   // Light / Dark theme
   const [theme, setTheme] = useState(() => localStorage.getItem('climaweb-theme') || 'dark')
@@ -223,6 +234,57 @@ export default function ClimaDashboard() {
     setTextSearch('')
     setStartDate('')
     setEndDate('')
+  }
+
+  // Load Filters from Saved Analysis
+  const handleLoadAnalysis = (filters) => {
+    if (!filters) return
+    setSelectedYears(filters.years || [])
+    setSelectedRegions(filters.regions || [])
+    setSelectedSeasons(filters.seasons || [])
+    setSelectedMasses(filters.masses || [])
+    setTextSearch(filters.textSearch || '')
+    setStartDate(filters.startDate || '')
+    setEndDate(filters.endDate || '')
+  }
+
+  // Save Analysis Form Handler
+  const handleSaveAnalysisSubmit = async (e) => {
+    e.preventDefault()
+    if (!saveTitle) return
+    setIsSaving(true)
+    try {
+      const filters = {
+        years: selectedYears,
+        regions: selectedRegions,
+        seasons: selectedSeasons,
+        masses: selectedMasses,
+        textSearch,
+        startDate,
+        endDate
+      }
+      
+      const { error } = await supabase
+        .from('user_saved_analyses')
+        .insert([{
+          user_id: session?.user?.id,
+          title: saveTitle,
+          description: saveDescription,
+          filters: filters
+        }])
+
+      if (error) throw error
+      
+      setShowSaveAnalysisModal(false)
+      setSaveTitle('')
+      setSaveDescription('')
+      alert('Análise salva com sucesso! Você pode acessá-la no seu Perfil.')
+    } catch (err) {
+      console.error(err)
+      alert('Erro ao salvar análise.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   // Filter Data Dynamically
@@ -517,13 +579,14 @@ export default function ClimaDashboard() {
       <aside className="dashboard-sidebar">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '14px', borderBottom: '1px solid var(--border)' }}>
           <div>
-            <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>⛈️ ClimaWeb</h2>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><Cloud size={18} style={{ color: 'var(--primary)' }} /> ClimaWeb</h2>
             <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Painel Climatológico</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
 
-            <button onClick={toggleTheme} className="theme-toggle-btn" title="Alternar tema">
-              {theme === 'dark' ? '☀️ Claro' : '🌙 Escuro'}
+            <button onClick={toggleTheme} className="theme-toggle-btn" title="Alternar tema" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {theme === 'dark' ? <Sun size={12} /> : <Moon size={12} />}
+              {theme === 'dark' ? 'Claro' : 'Escuro'}
             </button>
           </div>
         </div>
@@ -533,13 +596,22 @@ export default function ClimaDashboard() {
             Filtros de Análise
           </h3>
 
-          <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
-            <button onClick={handleRefresh} className="btn-secondary" style={{ flex: 1, padding: '7px', fontSize: '0.75rem' }}>
-              🔄 Atualizar
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', flexWrap: 'wrap' }}>
+            <button onClick={handleRefresh} className="btn-secondary" style={{ flex: 1, padding: '7px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              <RefreshCw size={14} /> Atualizar
             </button>
             <button onClick={handleResetFilters} className="btn-secondary" style={{ flex: 1, padding: '7px', fontSize: '0.75rem' }}>
               Limpar
             </button>
+            {session && (
+              <button 
+                onClick={() => setShowSaveAnalysisModal(true)} 
+                className="btn-primary" 
+                style={{ flex: '1 1 100%', padding: '7px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '4px' }}
+              >
+                <Bookmark size={14} /> Salvar Filtros
+              </button>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -713,21 +785,27 @@ export default function ClimaDashboard() {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px', borderRight: '1px solid var(--border)', paddingRight: '10px' }}>
-              <span style={{ color: theme === 'dark' ? '#3b82f6' : '#f59e0b', fontSize: '1rem' }}>{theme === 'dark' ? '🌙' : '☀️'}</span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', borderRight: '1px solid var(--border)', paddingRight: '10px' }}>
+              {theme === 'dark' ? <Moon size={14} color="#3b82f6" /> : <Sun size={14} color="#f59e0b" />}
               {theme === 'dark' ? 'Modo Escuro' : 'Modo Claro'}
             </span>
             <button onClick={toggleTheme} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.78rem' }}>
               {theme === 'dark' ? 'Mudar para Claro' : 'Mudar para Escuro'}
             </button>
             {role === 'guest' ? (
-              <button onClick={() => window.location.href = '/login'} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.78rem' }}>
-                👤 Entrar
+              <button onClick={() => setShowLoginModal(true)} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <User size={14} /> Entrar
               </button>
             ) : (
-              <button onClick={signOut} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.78rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}>
-                Sair
-              </button>
+              <>
+                <button 
+                  onClick={() => setShowProfileModal(true)} 
+                  className="btn-primary" 
+                  style={{ padding: '6px 14px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <User size={14} /> Minhas Análises
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -776,38 +854,44 @@ export default function ClimaDashboard() {
           <button 
             onClick={() => setActiveTab('espacial')} 
             className={`tab-button ${activeTab === 'espacial' ? 'active' : ''}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            📊 Distribuição Espacial
+            <BarChart2 size={16} /> Distribuição Espacial
           </button>
           <button 
             onClick={() => setActiveTab('sazonalidade')} 
             className={`tab-button ${activeTab === 'sazonalidade' ? 'active' : ''}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            📈 Sazonalidade
+            <BarChart3 size={16} /> Sazonalidade
           </button>
           <button 
             onClick={() => setActiveTab('diario')} 
             className={`tab-button ${activeTab === 'diario' ? 'active' : ''}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            🔍 Relatório Interativo Diário
+            <Search size={16} /> Relatório Interativo Diário
           </button>
           <button 
             onClick={() => setActiveTab('guia')} 
             className={`tab-button ${activeTab === 'guia' ? 'active' : ''}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            📖 Guia de Massas de Ar
+            <BookOpen size={16} /> Guia de Massas de Ar
           </button>
           <button 
             onClick={() => setActiveTab('auditoria')} 
             className={`tab-button ${activeTab === 'auditoria' ? 'active' : ''}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            ⚖️ Auditoria Pública
+            <Scale size={16} /> Auditoria Pública
           </button>
           <button 
             onClick={() => setActiveTab('explorer')} 
             className={`tab-button ${activeTab === 'explorer' ? 'active' : ''}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            🧪 Explorador de Dados
+            <FlaskConical size={16} /> Explorador de Dados
           </button>
 
         </div>
@@ -838,7 +922,7 @@ export default function ClimaDashboard() {
                   <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }} id="chart-contagem-dias">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>📊 Contagem de Dias por Massa de Ar</h4>
+                        <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}><BarChart2 size={18} /> Contagem de Dias por Massa de Ar</h4>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '24px' }}>Dias totais em que a massa esteve ativa (filtros aplicados)</p>
                       </div>
                     </div>
@@ -872,7 +956,7 @@ export default function ClimaDashboard() {
                 {/* Treemap Section */}
                 <div className="glass-card" style={{ padding: '24px' }}>
                   <div style={{ marginBottom: '16px' }}>
-                    <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>🗺️ Proporção Geográfica (Treemap)</h4>
+                    <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}><Map size={18} /> Proporção Geográfica (Treemap)</h4>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Mapeamento hierárquico das massas de ar por região do Brasil</p>
                   </div>
                   <div style={{ width: '100%', height: '400px' }}>
@@ -1057,6 +1141,61 @@ export default function ClimaDashboard() {
 
         </div>{/* end padding wrapper */}
       </main>
+
+      {/* Modais */}
+      {showLoginModal && (
+        <Login onClose={() => setShowLoginModal(false)} />
+      )}
+      
+      {showProfileModal && (
+        <UserProfile onClose={() => setShowProfileModal(false)} onLoadAnalysis={handleLoadAnalysis} />
+      )}
+
+      {showSaveAnalysisModal && (
+        <div style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', 
+          backgroundColor: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(12px)', padding: '20px'
+        }}>
+          <div className="glass-card" style={{ padding: '30px', width: '100%', maxWidth: '400px', background: 'rgba(30, 36, 46, 0.85)' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', color: 'var(--text-primary)' }}>Salvar Análise Atual</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+              Dê um nome para salvar os filtros atuais (Ano, Região, etc) e acessá-los rapidamente pelo seu perfil depois.
+            </p>
+            <form onSubmit={handleSaveAnalysisSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Título da Análise</label>
+                <input 
+                  type="text" 
+                  value={saveTitle} 
+                  onChange={(e) => setSaveTitle(e.target.value)} 
+                  required
+                  className="premium-input"
+                  placeholder="Ex: Seca no NE 2023"
+                  style={{ width: '100%', padding: '10px', marginTop: '4px' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Descrição Breve (Opcional)</label>
+                <input 
+                  type="text" 
+                  value={saveDescription} 
+                  onChange={(e) => setSaveDescription(e.target.value)} 
+                  className="premium-input"
+                  placeholder="Ex: Avaliação de massas secas..."
+                  style={{ width: '100%', padding: '10px', marginTop: '4px' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                <button type="button" onClick={() => setShowSaveAnalysisModal(false)} className="btn-secondary" style={{ flex: 1, padding: '10px' }}>Cancelar</button>
+                <button type="submit" disabled={isSaving} className="btn-primary" style={{ flex: 1, padding: '10px' }}>
+                  {isSaving ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

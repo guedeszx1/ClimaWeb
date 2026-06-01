@@ -3,6 +3,7 @@ import Plotly from 'plotly.js-dist-min'
 import createPlotlyComponent from 'react-plotly.js/factory'
 const Plot = createPlotlyComponent.default ? createPlotlyComponent.default(Plotly) : createPlotlyComponent(Plotly)
 import { GLOSSARIO } from './BrazilMap'
+import { LineChart, Leaf, Thermometer } from 'lucide-react'
 
 // Helper to convert English month names to Portuguese
 const MONTH_NAMES_PT = [
@@ -130,7 +131,7 @@ export default function ClimaCharts({ filteredData = [] }) {
       {/* 1. Stacked Area Chart */}
       <div className="glass-card" style={{ padding: '28px' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h4 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '4px' }}>📈 Histórico de Atuação das Massas de Ar (Artigo Científico)</h4>
+          <h4 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><LineChart size={20} /> Histórico de Atuação das Massas de Ar (Artigo Científico)</h4>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Evolução mensal absoluta no tempo. Formato científico de alta legibilidade para relatórios e publicações.</p>
         </div>
         
@@ -159,7 +160,7 @@ export default function ClimaCharts({ filteredData = [] }) {
         {/* 2. Season proportions */}
         <div className="glass-card" style={{ padding: '28px' }}>
           <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '4px' }}>🍁 Frequência Relativa (%) por Estação do Ano</h4>
+            <h4 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><Leaf size={20} /> Frequência Relativa (%) por Estação do Ano</h4>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Proporções normalizadas acumuladas para análise estatística de comportamento sazonal.</p>
           </div>
           <div style={{ width: '100%', height: '350px' }}>
@@ -181,7 +182,7 @@ export default function ClimaCharts({ filteredData = [] }) {
         {/* 3. Heatmap of Sazonalidade with Legend */}
         <div className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '4px' }}>🌡️ Matriz de Distribuição Mensal Acumulada</h4>
+            <h4 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><Thermometer size={20} /> Matriz de Distribuição Mensal Acumulada</h4>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Representação em escala térmica da frequência absoluta de dias por mês.</p>
           </div>
           

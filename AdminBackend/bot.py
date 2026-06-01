@@ -79,7 +79,8 @@ if bot_ativo:
             "📥 `/export` - Exporta e envia a base de auditoria completa em CSV\n"
             "🔍 `/search <termo>` - Busca termos nas descrições das cartas\n"
             "🗂️ `/export_charts <data_ini> <data_fim>` - Exporta as cartas sinóticas de um período\n"
-            "📅 `/chart <AAAA-MM-DD>` - Busca o quadro de massas de um dia"
+            "📅 `/chart <AAAA-MM-DD>` - Busca o quadro de massas de um dia\n"
+            "👥 `/users` - Lista e administra os usuários cadastrados"
         )
         bot.reply_to(message, welcome_text, parse_mode='Markdown', reply_markup=obter_teclado_principal())
 
@@ -512,6 +513,53 @@ if bot_ativo:
         else:
             bot.reply_to(message, "❌ Nenhuma imagem de carta sinótica foi encontrada online para o período solicitado.")
 
+    @bot.message_handler(commands=['users'])
+    def list_users(message):
+        print(f"[DEBUG] Comando /users recebido de {message.chat.id}")
+        if not supabase:
+            print("[DEBUG] Supabase não conectado")
+            bot.reply_to(message, "❌ Banco de dados não conectado.")
+            return
+            
+        try:
+            print("[DEBUG] Enviando chat action")
+            bot.send_chat_action(message.chat.id, 'typing')
+            print("[DEBUG] Consultando perfis")
+            res = supabase.table("perfis").select("*").execute()
+            print(f"[DEBUG] Perfis consultados. Encontrados: {len(res.data) if res.data else 0}")
+            if not res.data:
+                bot.reply_to(message, "Nenhum usuário cadastrado.")
+                return
+                
+            text = "👥 *Administração de Usuários*\n\n"
+            markup = types.InlineKeyboardMarkup(row_width=2)
+            has_pending = False
+            
+            for u in res.data:
+                uid = u.get("id")
+                email = u.get("email", "Sem Email")
+                status = str(u.get("status", "desconhecido")).lower()
+                
+                status_emoji = "✅" if status == "aprovado" else "⏳" if status == "pendente" else "❌"
+                # Using simple text formatting without markdown variables to prevent markdown errors
+                text += f"{status_emoji} {email} - {status.upper()}\n"
+                
+                if status == "pendente":
+                    has_pending = True
+                    btn_approve = types.InlineKeyboardButton(f"✅ Aprovar {email.split('@')[0]}", callback_data=f"approve_{uid}")
+                    btn_reject = types.InlineKeyboardButton(f"❌ Recusar", callback_data=f"reject_{uid}")
+                    markup.add(btn_approve, btn_reject)
+                    
+            if not has_pending:
+                markup = None
+                
+            print("[DEBUG] Enviando resposta final")
+            bot.reply_to(message, text, reply_markup=markup)
+            print("[DEBUG] Resposta enviada com sucesso")
+        except Exception as e:
+            print(f"[DEBUG] Erro em list_users: {e}")
+            bot.reply_to(message, f"❌ Erro ao listar usuários: {str(e)}")
+
     # Processamento de texto para botões do teclado customizado
     @bot.message_handler(func=lambda msg: msg.text and not msg.text.startswith('/'))
     def handle_text_buttons(message):
@@ -599,16 +647,22 @@ if bot_ativo:
         if call.data.startswith("approve_"):
             uid = call.data.split("_")[1]
             try:
-                supabase.table("perfis").update({"status": "aprovado"}).eq("id", uid).execute()
-                bot.edit_message_text("✅ *Usuário Aprovado com sucesso!* Acesso liberado.", chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode='Markdown')
+                res = supabase.table("perfis").update({"status": "aprovado"}).eq("id", uid).execute()
+                if res.data:
+                    bot.edit_message_text("✅ *Usuário Aprovado com sucesso!* Acesso liberado.", chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode='Markdown')
+                else:
+                    bot.answer_callback_query(call.id, "❌ Falha ao aprovar: Bloqueado pelo Supabase (RLS ou ID não encontrado).", show_alert=True)
             except Exception as e:
                 bot.answer_callback_query(call.id, "❌ Erro ao aprovar.")
                 
         elif call.data.startswith("reject_"):
             uid = call.data.split("_")[1]
             try:
-                supabase.table("perfis").update({"status": "recusado"}).eq("id", uid).execute()
-                bot.edit_message_text("❌ *Usuário Recusado.* O acesso permanece bloqueado.", chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode='Markdown')
+                res = supabase.table("perfis").update({"status": "recusado"}).eq("id", uid).execute()
+                if res.data:
+                    bot.edit_message_text("❌ *Usuário Recusado.* O acesso permanece bloqueado.", chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode='Markdown')
+                else:
+                    bot.answer_callback_query(call.id, "❌ Falha ao recusar: Bloqueado pelo Supabase (RLS ou ID não encontrado).", show_alert=True)
             except Exception as e:
                 bot.answer_callback_query(call.id, "❌ Erro ao recusar.")
 
@@ -680,9 +734,11 @@ def check_pending_users():
             print(f"[Telegram Bot] Erro ao checar cadastros pendentes: {e}")
         time.sleep(15)
 
+if bot_ativo:
+    threading.Thread(target=check_pending_users, daemon=True).start()
+
 if __name__ == "__main__":
     if bot_ativo:
-        threading.Thread(target=check_pending_users, daemon=True).start()
         print("[Telegram Bot] Iniciando escuta (polling)... Pressione Ctrl+C para encerrar.")
         try:
             bot.infinity_polling()
