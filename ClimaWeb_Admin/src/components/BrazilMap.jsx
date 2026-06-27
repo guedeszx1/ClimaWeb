@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { Map, Download } from 'lucide-react'
 import { toPng } from 'html-to-image'
 
@@ -50,6 +50,21 @@ export const GLOSSARIO = {
 export default function BrazilMap({ regionMassMap = {}, title = "" }) {
   const containerRef = useRef(null)
   const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, region: '', mass: '' })
+  const [geoData, setGeoData] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/mapa_brasil_regioes.json')
+      .then(res => res.json())
+      .then(data => {
+        setGeoData(data)
+        setIsLoading(false)
+      })
+      .catch(err => {
+        console.error("Erro ao carregar GeoJSON:", err)
+        setIsLoading(false)
+      })
+  }, [])
 
   const getRegionColor = (region) => {
     const mass = regionMassMap[region]
@@ -65,9 +80,6 @@ export default function BrazilMap({ regionMassMap = {}, title = "" }) {
 
   const handleMouseMove = (e, region) => {
     const rect = e.currentTarget.getBoundingClientRect()
-    const parentRect = e.currentTarget.ownerDocument.documentElement.getBoundingClientRect()
-    const x = e.clientX - rect.left + 15
-    const y = e.clientY - rect.top + 15
     const mass = getRegionMass(region)
     setTooltip({
       show: true,
@@ -106,6 +118,97 @@ export default function BrazilMap({ regionMassMap = {}, title = "" }) {
       })
   }
 
+  const projectedPaths = useMemo(() => {
+    if (!geoData || !geoData.features) return []
+    
+    // Find bounding box
+    let minLng = Infinity, maxLng = -Infinity;
+    let minLat = Infinity, maxLat = -Infinity;
+    
+    geoData.features.forEach(feature => {
+      const geom = feature.geometry;
+      if (!geom) return;
+      
+      const processRing = (ring) => {
+        ring.forEach(([lng, lat]) => {
+          if (lng < minLng) minLng = lng;
+          if (lng > maxLng) maxLng = lng;
+          if (lat < minLat) minLat = lat;
+          if (lat > maxLat) maxLat = lat;
+        });
+      };
+      
+      const processPolygon = (poly) => {
+        poly.forEach(processRing);
+      };
+      
+      if (geom.type === "Polygon") {
+        processPolygon(geom.coordinates);
+      } else if (geom.type === "MultiPolygon") {
+        geom.coordinates.forEach(processPolygon);
+      }
+    });
+    
+    // Map SVG coordinate space
+    const width = 500;
+    const height = 500;
+    
+    const lngDiff = maxLng - minLng;
+    const latDiff = maxLat - minLat;
+    
+    const mapAspectRatio = lngDiff / latDiff;
+    const svgAspectRatio = width / height;
+    
+    let scaleX, scaleY;
+    let offsetX = 0, offsetY = 0;
+    
+    if (mapAspectRatio > svgAspectRatio) {
+      const scale = width / lngDiff;
+      scaleX = scale;
+      scaleY = scale;
+      offsetY = (height - latDiff * scale) / 2;
+    } else {
+      const scale = height / latDiff;
+      scaleX = scale;
+      scaleY = scale;
+      offsetX = (width - lngDiff * scale) / 2;
+    }
+    
+    const project = ([lng, lat]) => {
+      const x = offsetX + (lng - minLng) * scaleX;
+      const y = height - (offsetY + (lat - minLat) * scaleY);
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    };
+    
+    const getPathData = (geometry) => {
+      if (!geometry) return "";
+      const processPolygon = (poly) => {
+        return poly.map(ring => {
+          if (ring.length === 0) return "";
+          const points = ring.map(project);
+          return `M ${points.join(" L ")} Z`;
+        }).join(" ");
+      };
+      
+      if (geometry.type === "Polygon") {
+        return processPolygon(geometry.coordinates);
+      } else if (geometry.type === "MultiPolygon") {
+        return geometry.coordinates.map(processPolygon).join(" ");
+      }
+      return "";
+    };
+    
+    return geoData.features.map((feature, idx) => {
+      const region_key = feature.properties?.region_key || "Não Informada";
+      const d = getPathData(feature.geometry);
+      return {
+        id: feature.properties?.fid || idx,
+        region_key,
+        d
+      };
+    });
+  }, [geoData])
+
   const tooltipDetails = GLOSSARIO[tooltip.mass] || GLOSSARIO['Não Informada']
 
   return (
@@ -118,57 +221,24 @@ export default function BrazilMap({ regionMassMap = {}, title = "" }) {
       </div>
 
       <div className="map-export-target" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px' }}>
-        <svg viewBox="0 0 500 500" style={{ width: '100%', maxWidth: '380px', filter: 'drop-shadow(0px 10px 20px rgba(0,0,0,0.3))' }}>
-          {/* Norte */}
-          <path 
-            className="br-region" 
-            d="M 40,200 L 140,60 L 250,60 L 280,180 L 240,260 L 150,260 Z"
-            fill={getRegionColor('Norte')}
-            style={{ transformOrigin: '150px 150px' }}
-            onMouseMove={(e) => handleMouseMove(e, 'Norte')}
-            onMouseLeave={handleMouseLeave}
-          />
-          
-          {/* Nordeste */}
-          <path 
-            className="br-region" 
-            d="M 250,60 L 410,100 L 430,150 L 370,240 L 280,180 Z"
-            fill={getRegionColor('Nordeste')}
-            style={{ transformOrigin: '350px 150px' }}
-            onMouseMove={(e) => handleMouseMove(e, 'Nordeste')}
-            onMouseLeave={handleMouseLeave}
-          />
-          
-          {/* Centro-Oeste/Sudeste */}
-          <path 
-            className="br-region" 
-            d="M 150,260 L 240,260 L 280,180 L 370,240 L 340,360 L 220,360 Z"
-            fill={getRegionColor('Centro')}
-            style={{ transformOrigin: '260px 280px' }}
-            onMouseMove={(e) => handleMouseMove(e, 'Centro')}
-            onMouseLeave={handleMouseLeave}
-          />
-          
-          {/* Sul */}
-          <path 
-            className="br-region" 
-            d="M 220,360 L 300,360 L 280,470 L 230,470 Z"
-            fill={getRegionColor('Sul')}
-            style={{ transformOrigin: '250px 420px' }}
-            onMouseMove={(e) => handleMouseMove(e, 'Sul')}
-            onMouseLeave={handleMouseLeave}
-          />
-          
-          {/* Litoral */}
-          <path 
-            className="br-region" 
-            d="M 410,100 L 440,110 L 460,160 L 400,280 L 340,380 L 300,360 L 340,340 L 370,240 L 430,150 Z"
-            fill={getRegionColor('Litoral')}
-            style={{ transformOrigin: '400px 250px', opacity: 0.95 }}
-            onMouseMove={(e) => handleMouseMove(e, 'Litoral')}
-            onMouseLeave={handleMouseLeave}
-          />
-        </svg>
+        {isLoading ? (
+          <div style={{ height: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+            Carregando mapa...
+          </div>
+        ) : (
+          <svg viewBox="0 0 500 500" style={{ width: '100%', maxWidth: '380px', filter: 'drop-shadow(0px 10px 20px rgba(0,0,0,0.3))' }}>
+            {projectedPaths.map((path) => (
+              <path 
+                key={path.id}
+                className="br-region" 
+                d={path.d}
+                fill={getRegionColor(path.region_key)}
+                onMouseMove={(e) => handleMouseMove(e, path.region_key)}
+                onMouseLeave={handleMouseLeave}
+              />
+            ))}
+          </svg>
+        )}
       </div>
 
       {tooltip.show && (

@@ -7,7 +7,7 @@ export const useAuth = () => useContext(AuthContext)
 
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null)
-  const [role, setRole] = useState('guest') // Default is now guest
+  const [role, setRole] = useState('guest')
   const [loading, setLoading] = useState(true)
 
   const checkUserStatus = async (userSession) => {
