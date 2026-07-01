@@ -102,9 +102,12 @@ export default function BrazilMap({ regionMassMap = {}, title = "" }) {
     
     toPng(element, { 
       backgroundColor: '#0b0f19', 
+      pixelRatio: 3, // Set pixelRatio to 3 for ultra-high quality export
       style: {
         borderRadius: '16px',
-        padding: '24px'
+        padding: '24px',
+        width: element.offsetWidth + 'px',
+        height: element.offsetHeight + 'px'
       }
     })
       .then((dataUrl) => {
@@ -220,7 +223,12 @@ export default function BrazilMap({ regionMassMap = {}, title = "" }) {
         </button>
       </div>
 
-      <div className="map-export-target" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px' }}>
+      <div className="map-export-target" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '10px' }}>
+        {/* Title for export context */}
+        <div style={{ alignSelf: 'flex-start', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '16px', display: 'block' }}>
+          Distribuição Geográfica {title && `- ${title}`}
+        </div>
+
         {isLoading ? (
           <div style={{ height: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
             Carregando mapa...
@@ -233,12 +241,50 @@ export default function BrazilMap({ regionMassMap = {}, title = "" }) {
                 className="br-region" 
                 d={path.d}
                 fill={getRegionColor(path.region_key)}
+                stroke="#0b0f19"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
                 onMouseMove={(e) => handleMouseMove(e, path.region_key)}
                 onMouseLeave={handleMouseLeave}
               />
             ))}
+            
+            {/* Indicador de Norte */}
+            <g transform="translate(440, 50)" style={{ pointerEvents: 'none' }}>
+              <circle cx="0" cy="0" r="16" fill="rgba(15, 23, 42, 0.4)" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+              <polygon points="0,-10 3,0 0,-2" fill="#ef4444" />
+              <polygon points="0,10 3,0 0,2" fill="rgba(255,255,255,0.6)" />
+              <polygon points="0,-10 -3,0 0,-2" fill="#f87171" />
+              <polygon points="0,10 -3,0 0,2" fill="rgba(255,255,255,0.4)" />
+              <text x="0" y="-13" textAnchor="middle" fontSize="9" fill="var(--text-primary)" fontWeight="bold" fontFamily="sans-serif">N</text>
+            </g>
+
+            {/* Escala Gráfica */}
+            <g transform="translate(40, 450)" style={{ pointerEvents: 'none' }}>
+              <rect x="0" y="0" width="58" height="4" fill="var(--text-primary)" stroke="var(--text-primary)" strokeWidth="0.5" />
+              <rect x="58" y="0" width="58" height="4" fill="none" stroke="var(--text-primary)" strokeWidth="0.5" />
+              <line x1="0" y1="0" x2="0" y2="7" stroke="var(--text-primary)" strokeWidth="1" />
+              <line x1="58" y1="0" x2="58" y2="7" stroke="var(--text-primary)" strokeWidth="1" />
+              <line x1="116" y1="0" x2="116" y2="7" stroke="var(--text-primary)" strokeWidth="1" />
+              <text x="0" y="17" fontSize="8" fill="var(--text-muted)" textAnchor="middle" fontFamily="sans-serif">0</text>
+              <text x="58" y="17" fontSize="8" fill="var(--text-muted)" textAnchor="middle" fontFamily="sans-serif">500</text>
+              <text x="116" y="17" fontSize="8" fill="var(--text-muted)" textAnchor="middle" fontFamily="sans-serif">1000 km</text>
+            </g>
           </svg>
         )}
+
+        {/* Legend inside the export container */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '24px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          {Object.entries(GLOSSARIO).map(([key, info]) => {
+            const count = Object.values(regionMassMap).filter(v => v === key).length
+            return (
+              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: count > 0 ? 1 : 0.6 }}>
+                <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: info.cor }}></span>
+                <span>{key} {count > 0 && `(${count})`}</span>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {tooltip.show && (
@@ -265,20 +311,6 @@ export default function BrazilMap({ regionMassMap = {}, title = "" }) {
           </div>
         </div>
       )}
-
-      {/* Legend below the map */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '16px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-        {Object.entries(GLOSSARIO).map(([key, info]) => {
-          // If the region map contains this key, show it highlighted, else keep it
-          const count = Object.values(regionMassMap).filter(v => v === key).length
-          return (
-            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: count > 0 ? 1 : 0.6 }}>
-              <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: info.cor }}></span>
-              <span>{key} {count > 0 && `(${count})`}</span>
-            </div>
-          )
-        })}
-      </div>
     </div>
   )
 }
