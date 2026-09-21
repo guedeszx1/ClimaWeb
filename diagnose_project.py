@@ -135,8 +135,19 @@ def main():
         check_file(os.path.join(frontend_dir, "package.json"))
         check_file(os.path.join(frontend_dir, "index.html"))
         
-    # 3. VERIFICAÇÃO DE REDE / SERVIÇOS ATIVOS
-    print("\n--- [3] SERVIÇOS E PORTAS ---")
+    # 3. VERIFICAÇÃO DE BANCO DE DADOS & NUVEM (SUPABASE)
+    print("\n--- [3] CONEXÃO COM SUPABASE ---")
+    try:
+        supabase_url = "https://kaukzcicfltfyznusdoq.supabase.co"
+        host = supabase_url.replace("https://", "").replace("http://", "").split("/")[0]
+        ip = socket.gethostbyname(host)
+        print_status(f"DNS Supabase ({host})", True, f"IP Resolvido: {ip}")
+    except Exception as ex:
+        print_status("DNS Supabase", False, "FALHA DE CONEXAO / PROJETO PAUSADO NO SUPABASE")
+        print("  [ATENCAO] DICA: Se o projeto Supabase estiver pausado (inativo por >7 dias no plano gratuito), acesse https://supabase.com/dashboard para reativa-lo.")
+
+    # 4. VERIFICAÇÃO DE REDE / SERVIÇOS ATIVOS
+    print("\n--- [4] SERVIÇOS E PORTAS LOCAIS ---")
     check_port(5173)  # Vite local default
     check_port(8000)  # FastAPI local default
     

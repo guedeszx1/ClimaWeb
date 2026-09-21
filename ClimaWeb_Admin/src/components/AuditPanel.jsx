@@ -28,7 +28,7 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
   }, [allData])
 
   // Set initial selected date
-  useMemo(() => {
+  useEffect(() => {
     if (uniqueDates.length && !selectedDate) {
       setSelectedDate(uniqueDates[0])
     }
@@ -45,7 +45,7 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
   }, [allData, selectedDate])
 
   // Set initial selected region when date changes
-  useMemo(() => {
+  useEffect(() => {
     if (regionsForDate.length) {
       setSelectedRegion(regionsForDate[0])
     } else {
@@ -60,7 +60,7 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
   }, [allData, selectedDate, selectedRegion])
 
   // Initialize form fields when current record changes
-  useMemo(() => {
+  useEffect(() => {
     if (currentRecord) {
       const isCorrect = currentRecord.massa_de_ar_ia === currentRecord.massa_de_ar_final ? 'Sim' : 'Não'
       setIaCorrect(isCorrect)
@@ -229,7 +229,7 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
 
       if (error) throw error
 
-      setSuccessMsg('Validação salva no Supabase com sucesso!')
+      setSuccessMsg('Validação salva com sucesso!')
       
       if (onRefreshData) {
         await onRefreshData()
@@ -478,10 +478,10 @@ export default function AuditPanel({ allData = [], onRefreshData, role }) {
                   </div>
                 ) : (
                   <img 
-                    src={imageSrc} 
+                    src={imageSrc || undefined} 
                     alt={`Carta Sinótica INMET - ${selectedDate}`} 
                     onError={handleImageError}
-                    onClick={() => setFullscreenImage(imageSrc)}
+                    onClick={() => imageSrc && setFullscreenImage(imageSrc)}
                     style={{ maxWidth: '100%', maxHeight: '420px', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', cursor: 'pointer' }} 
                   />
                 )

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Cloud, Sun, Moon, User, BarChart2, Search, BookOpen, RefreshCw, Scale, FlaskConical, BarChart3, Map, Calendar, Download, FileText, Bookmark } from 'lucide-react'
+import { Cloud, Sun, Moon, User, BarChart2, Search, BookOpen, RefreshCw, Scale, FlaskConical, BarChart3, Map, Calendar, Download, FileText, Bookmark, AlertTriangle, Sparkles } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import BrazilMap, { GLOSSARIO } from './BrazilMap'
@@ -184,7 +184,7 @@ export default function ClimaDashboard() {
       setAllData(dataList)
     } catch (err) {
       console.error('Erro ao buscar dados do clima:', err)
-      setError(`Erro ao buscar dados do Supabase: ${err.message}`)
+      setError(`Erro ao carregar dados: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -812,6 +812,93 @@ export default function ClimaDashboard() {
 
         <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
+        {/* Banner de Próximas Atualizações */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          borderRadius: '12px',
+          padding: '14px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#60a5fa',
+              flexShrink: 0
+            }}>
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ 
+                  fontSize: '0.7rem', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.06em', 
+                  fontWeight: 700, 
+                  color: '#93c5fd',
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  border: '1px solid rgba(59, 130, 246, 0.35)',
+                  padding: '2px 7px',
+                  borderRadius: '6px'
+                }}>
+                  Em Breve
+                </span>
+                <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+                  Próximas Atualizações
+                </strong>
+              </div>
+              <p style={{ fontSize: '0.82rem', margin: '4px 0 0 0', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                Novos recursos e aprimoramentos estão sendo preparados para a plataforma. Em breve divulgaremos o cronograma completo de novidades.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div style={{ 
+            backgroundColor: 'rgba(239, 68, 68, 0.15)', 
+            border: '1px solid rgba(239, 68, 68, 0.4)', 
+            borderRadius: '12px', 
+            padding: '16px 20px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            gap: '16px',
+            color: '#f87171'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <AlertTriangle size={24} style={{ flexShrink: 0 }} />
+              <div>
+                <strong style={{ fontSize: '0.95rem' }}>Falha na Conexão com o Banco de Dados</strong>
+                <p style={{ fontSize: '0.82rem', margin: '4px 0 0 0', opacity: 0.9 }}>
+                  {error.includes('getaddrinfo') || error.includes('FetchError') || error.includes('Failed to fetch') 
+                    ? 'O serviço de dados está temporariamente inacessível ou em manutenção. Por favor, tente novamente em instantes.' 
+                    : error}
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={handleRefresh} 
+              className="btn-secondary" 
+              style={{ padding: '8px 16px', fontSize: '0.8rem', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <RefreshCw size={14} /> Tentar Novamente
+            </button>
+          </div>
+        )}
+
         {/* KPIs row */}
         <div className="metrics-row">
           
@@ -900,7 +987,7 @@ export default function ClimaDashboard() {
         {loading ? (
           <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
             <div style={{ display: 'inline-block', width: '24px', height: '24px', border: '2px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '12px' }}></div>
-            <div style={{ fontSize: '0.875rem' }}>Carregando registros do Supabase...</div>
+            <div style={{ fontSize: '0.875rem' }}>Carregando...</div>
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         ) : error ? (
